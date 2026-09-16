@@ -190,14 +190,14 @@ Pass favorite IDs via query param: `?ids=1,5,23,42`
 
 ## Gotchas
 
-- This is a git subtree published as a **one-commit orphan snapshot**. Its public
-  history shares no ancestry with anything this repo can split, so a subtree push
-  can never fast-forward. Publish with:
+- This project is published to GitHub (`geoffmyers/sample-browser`) as a snapshot.
+  Each publish appends one commit to the public history. Publish with:
   `scripts/publish-subtree-snapshot.sh --prefix=music/sample-browser --publish`
+  Exclusions and GitHub metadata are declared in `scripts/subtree-publish.json`.
 - **NEVER run `git subtree push` or `git subtree split`.** A raw split has twice
   pushed the entire mono-repo history — and the secrets in it — to a public remote
   (see `docs/security/2026-02-04-` and `2026-05-12-credential-leak-audit.md`). A
-  pre-push hook now refuses it.
+  pre-push hook refuses it.
 
 ## Performance Notes
 
