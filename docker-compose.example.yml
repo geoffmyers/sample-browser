@@ -1,0 +1,173 @@
+# Sample Browser — example deployment
+#
+# Copy to docker-compose.yml and adjust. Every site-specific value is an
+# environment variable with a neutral default:
+#   DOMAIN        public domain (default: example.com)
+#   NETWORK_NAME  external docker network to join
+#   AUDIO_PATH    host path to your sample library (mounted read-only)
+#   DATA_PATH     host path for the index/database
+#
+# Traefik labels are included; delete them if you terminate TLS another way.
+#
+# Both images are BUILT from this repository (`docker compose build`); no
+# prebuilt image is published. The API URL the browser calls is baked into the
+# frontend at build time: NEXT_PUBLIC_API_URL (default http://localhost:8000).
+# Set it before building if you will open the app from another machine.
+version: '3.8'
+
+# =============================================================================
+# Sample Browser - Audio Sample/Loop Browser Web Application
+# =============================================================================
+# A self-hosted web application for browsing, organizing, and searching
+# audio samples and loops.
+#
+# Required Environment Variables (see .env.example):
+#   - DATA_PATH: Host path for database and logs (read-write)
+#   - AUDIO_PATH: Host path for audio files (read-only)
+# =============================================================================
+
+networks:
+  default:
+    external: true
+    name: ${NETWORK_NAME:-sample-browser}
+
+services:
+  # ---------------------------------------------------------------------------
+  # Backend API Service (FastAPI + Python)
+  # ---------------------------------------------------------------------------
+  sample-browser-api:
+    container_name: sample-browser-api
+    hostname: sample-browser-api.${DOMAIN:-example.com}
+    build: ./backend
+    image: sample-browser-api:local
+
+    # User and security
+    user: "${PUID:-568}:${PGID:-568}"
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges=true"]
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: "${API_CPU_LIMIT:-2}"
+          memory: "${API_MEMORY_LIMIT:-1024M}"
+        reservations:
+          cpus: "${API_CPU_RESERVATION:-0.1}"
+          memory: "${API_MEMORY_RESERVATION:-128M}"
+
+    # Environment
+    environment:
+      TZ: ${TZ:-America/Chicago}
+      PUID: ${PUID:-568}
+      PGID: ${PGID:-568}
+
+      # Application config
+      DATABASE_PATH: /data/samples.db
+      AUDIO_PATH: /audio
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      SCAN_ON_STARTUP: ${SCAN_ON_STARTUP:-true}
+      WATCH_FOR_CHANGES: ${WATCH_FOR_CHANGES:-false}
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-fsSL", "http://localhost:8000/api/health"]
+      interval: ${HEALTHCHECK_INTERVAL:-30s}
+      timeout: ${HEALTHCHECK_TIMEOUT:-5s}
+      retries: ${HEALTHCHECK_RETRIES:-5}
+      start_period: ${API_HEALTHCHECK_START_PERIOD:-60s}
+
+    restart: ${RESTART_POLICY:-unless-stopped}
+
+    # Volumes
+    volumes:
+      # Application data (database, logs) - read-write
+      - type: bind
+        source: ${DATA_PATH:-./data}
+        target: /data
+        read_only: false
+
+      # Audio files - read-only
+      - type: bind
+        source: ${AUDIO_PATH:-./audio}
+        target: /audio
+        read_only: true
+
+    # Expose API port to host for browser access during local development
+    ports:
+      - "8000:8000"
+
+    labels:
+      - "traefik.enable=false"
+
+  # ---------------------------------------------------------------------------
+  # Frontend Web Service (Next.js)
+  # ---------------------------------------------------------------------------
+  sample-browser-web:
+    container_name: sample-browser-web
+    hostname: sample-browser.${DOMAIN:-example.com}
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    image: sample-browser-web:local
+
+    # User and security
+    user: "${PUID:-568}:${PGID:-568}"
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges=true"]
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: "${WEB_CPU_LIMIT:-1}"
+          memory: "${WEB_MEMORY_LIMIT:-512M}"
+        reservations:
+          cpus: "${WEB_CPU_RESERVATION:-0.1}"
+          memory: "${WEB_MEMORY_RESERVATION:-256M}"
+
+    # Environment
+    environment:
+      TZ: ${TZ:-America/Chicago}
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: ${HEALTHCHECK_INTERVAL:-30s}
+      timeout: ${HEALTHCHECK_TIMEOUT:-5s}
+      retries: ${HEALTHCHECK_RETRIES:-5}
+      start_period: ${WEB_HEALTHCHECK_START_PERIOD:-120s}
+
+    restart: ${RESTART_POLICY:-unless-stopped}
+
+    depends_on:
+      sample-browser-api:
+        condition: service_healthy
+
+    # Port configuration
+    ports:
+      - mode: ${PORT_MODE:-ingress}
+        protocol: tcp
+        published: ${PUBLISHED_PORT:-3000}
+        target: 3000
+
+    # Labels for Traefik and Homepage
+    labels:
+      # Traefik
+      - "traefik.enable=${TRAEFIK_ENABLE:-true}"
+      - "traefik.http.routers.sample-browser.rule=Host(`sample-browser.${DOMAIN:-example.com}`)"
+      - "traefik.http.routers.sample-browser.tls=${TRAEFIK_TLS:-true}"
+      - "traefik.http.routers.sample-browser.tls.certresolver=${TRAEFIK_CERTRESOLVER:-myresolver}"
+      - "traefik.http.services.sample-browser.loadbalancer.server.port=3000"
+
+      # Homepage dashboard
+      - "homepage.group=${HOMEPAGE_GROUP:-Media}"
+      - "homepage.name=Sample Browser"
+      - "homepage.icon=audio-wave.svg"
+      - "homepage.href=https://sample-browser.${DOMAIN:-example.com}"
+      - "homepage.description=Audio sample/loop browser"
+
+      # Custom site labels
