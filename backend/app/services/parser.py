@@ -509,6 +509,17 @@ def _extract_genre(filepath: str) -> Optional[str]:
     return None
 
 
+def _word(pattern: str) -> str:
+    """Match `pattern` as a whole word of a lower-cased path.
+
+    Not with \\b: regex treats "_" as part of a word, and sample names join words
+    with underscores, so \\bloop\\b never matched "pad_loop.wav" and
+    \\b4_4\\b never matched "drums_4_4_140bpm.wav". Any character that is not a
+    letter or digit separates words here.
+    """
+    return rf"(?<![a-z0-9]){pattern}(?![a-z0-9])"
+
+
 def _detect_loop(filepath: str) -> Optional[bool]:
     """
     Detect if sample is a loop or one-shot based on filename/path keywords.
@@ -518,20 +529,20 @@ def _detect_loop(filepath: str) -> Optional[bool]:
 
     # Loop indicators
     loop_patterns = [
-        r"\bloop\b",
-        r"\bloops\b",
-        r"\blooping\b",
-        r"\bcycl(?:e|ing)\b",
+        _word(r"loop"),
+        _word(r"loops"),
+        _word(r"looping"),
+        _word(r"cycl(?:e|ing)"),
     ]
 
     # One-shot indicators
     oneshot_patterns = [
-        r"\bone[_-]?shot\b",
-        r"\boneshot\b",
-        r"\bsingle\b",
-        r"\bhit\b",
-        r"\bstab\b",
-        r"\bshot\b",
+        _word(r"one[_-]?shot"),
+        _word(r"oneshot"),
+        _word(r"single"),
+        _word(r"hit"),
+        _word(r"stab"),
+        _word(r"shot"),
     ]
 
     for pattern in loop_patterns:
@@ -554,23 +565,23 @@ def _detect_processed(filepath: str) -> Optional[bool]:
 
     # Processed/wet indicators
     processed_patterns = [
-        r"\bwet\b",
-        r"\bprocessed\b",
-        r"\bfx\b",
-        r"\beffect(?:s|ed)?\b",
-        r"\breverb\b",
-        r"\bdelay\b",
-        r"\bdistort(?:ion|ed)?\b",
-        r"\bsaturated?\b",
-        r"\bcompressed?\b",
+        _word(r"wet"),
+        _word(r"processed"),
+        _word(r"fx"),
+        _word(r"effect(?:s|ed)?"),
+        _word(r"reverb"),
+        _word(r"delay"),
+        _word(r"distort(?:ion|ed)?"),
+        _word(r"saturated?"),
+        _word(r"compressed?"),
     ]
 
     # Dry indicators
     dry_patterns = [
-        r"\bdry\b",
-        r"\bclean\b",
-        r"\braw\b",
-        r"\bunprocessed\b",
+        _word(r"dry"),
+        _word(r"clean"),
+        _word(r"raw"),
+        _word(r"unprocessed"),
     ]
 
     for pattern in processed_patterns:
@@ -593,13 +604,13 @@ def _detect_time_signature(filepath: str) -> Optional[str]:
 
     # Common time signature patterns
     time_sig_patterns = [
-        (r"\b4[/_]4\b", "4/4"),
-        (r"\b3[/_]4\b", "3/4"),
-        (r"\b6[/_]8\b", "6/8"),
-        (r"\b12[/_]8\b", "12/8"),
-        (r"\b2[/_]4\b", "2/4"),
-        (r"\b5[/_]4\b", "5/4"),
-        (r"\b7[/_]8\b", "7/8"),
+        (_word(r"4[/_]4"), "4/4"),
+        (_word(r"3[/_]4"), "3/4"),
+        (_word(r"6[/_]8"), "6/8"),
+        (_word(r"12[/_]8"), "12/8"),
+        (_word(r"2[/_]4"), "2/4"),
+        (_word(r"5[/_]4"), "5/4"),
+        (_word(r"7[/_]8"), "7/8"),
     ]
 
     for pattern, time_sig in time_sig_patterns:

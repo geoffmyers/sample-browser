@@ -186,10 +186,12 @@ Genres are matched anywhere in the path, and folder names are added as
 searchable descriptors, except generic ones such as `Drums` and `Loops`. Sample
 rate, bit depth, channels and duration come from the audio itself.
 
-**Known limitation:** the loop, one-shot and time-signature keywords are missed
-when an underscore joins them to a neighbouring word. `Pad Loop.wav`,
-`Kick 4_4.wav` and a `Loops/` folder are detected; `Pad_Loop.wav` and
-`Drums_4_4_140bpm.wav` are not.
+Loop and one-shot words (`Loop`, `One_Shot`, `Stab`…), wet and dry words
+(`Wet`, `Reverb`, `Dry`, `Raw`…) and time signatures (`4_4`, `6_8`…) count
+however they are separated: by spaces, underscores, hyphens or folders.
+`Pad_Loop.wav` is a loop, `Drums_4_4_140bpm.wav` is in 4/4, and `Drywall_Hit.wav`
+is not dry. `backend/tests/test_parser.py` checks these cases and every row of
+the table above.
 
 ### Supported formats
 
@@ -305,8 +307,6 @@ Bug reports and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md
 for setup, checks and how this repository is published.
 
 ## License
-
-Copyright © 2026 Geoff Myers
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software

@@ -34,7 +34,11 @@ Run these before pushing:
 
 ```bash
 cd frontend && npm run lint && npm run build
+cd ../backend && pip install -r requirements-dev.txt && python -m pytest tests
 ```
+
+The backend tests cover filename parsing, including the example table in the
+README; add a case there when you change what the parser recognises.
 
 ## Before you open a pull request
 
