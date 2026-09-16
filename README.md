@@ -13,17 +13,6 @@
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)](CONTRIBUTING.md)
 <!-- BADGES:END -->
 
-## Description
-
-A self-hosted web app for finding your way around a large library of audio
-samples, loops and MIDI files. Point it at a folder, and it indexes every file:
-tempo, key and instrument from the filename, and sample rate, bit depth,
-channels and length from the file itself. You can then search, filter and
-audition the whole library in the browser.
-
-It runs as two Docker containers, a FastAPI backend and a Next.js frontend, and
-mounts your library **read-only**.
-
 ## Table of Contents
 
 - [Description](#description)
@@ -45,6 +34,17 @@ mounts your library **read-only**.
 - [Credits](#credits)
 - [Contributing](#contributing)
 - [License](#license)
+
+## Description
+
+A self-hosted web app for finding your way around a large library of audio
+samples, loops and MIDI files. Point it at a folder, and it indexes every file:
+tempo, key and instrument from the filename, and sample rate, bit depth,
+channels and length from the file itself. You can then search, filter and
+audition the whole library in the browser.
+
+It runs as two Docker containers, a FastAPI backend and a Next.js frontend, and
+mounts your library **read-only**.
 
 ## Screenshots
 
