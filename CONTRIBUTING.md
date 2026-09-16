@@ -30,12 +30,30 @@ cd frontend && npm install && npm run dev
 
 ## Checks
 
-Run these before pushing:
+<!-- CHECKS:START -->
+Every push and pull request runs these checks in GitHub Actions
+([`.github/workflows/checks.yml`](.github/workflows/checks.yml)), and every release has passed them.
+To run one yourself, use the same commands from the directory shown.
+
+**backend tests** (Python 3.12, from `backend/`):
 
 ```bash
-cd frontend && npm run lint && npm run build
-cd ../backend && pip install -r requirements-dev.txt && python -m pytest tests
+python -m venv /tmp/venv
+. /tmp/venv/bin/activate
+pip install --quiet --upgrade pip
+pip install --quiet -r requirements-dev.txt
+python -m pytest -q
 ```
+
+**frontend build** (Node.js 22, from `frontend/`):
+
+```bash
+npm ci
+npm run lint
+npm run build
+```
+
+<!-- CHECKS:END -->
 
 The backend tests cover filename parsing, including the example table in the
 README; add a case there when you change what the parser recognises.

@@ -41,7 +41,7 @@ function buildTree(directories: DirectoryInfo[]): DirectoryNode[] {
 
     // Build path incrementally and create missing nodes
     let currentPath = "";
-    let currentLevel = root;
+    const currentLevel = root;
 
     for (let i = 0; i < pathParts.length; i++) {
       const part = pathParts[i] ?? "";
