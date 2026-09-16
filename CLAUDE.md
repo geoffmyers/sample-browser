@@ -125,7 +125,7 @@ Required:
 
 Optional:
 - `PUID`/`PGID` - Container user/group IDs (default: 568)
-- `TZ` - Timezone (default: America/Chicago)
+- `TZ` - Timezone (default: UTC)
 - `PUBLISHED_PORT` - Web port (default: 3000)
 - `SCAN_ON_STARTUP` - Auto-scan on start (default: true)
 - `LOG_LEVEL` - Logging level (default: info)

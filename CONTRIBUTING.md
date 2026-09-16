@@ -55,6 +55,18 @@ npm run build
 
 <!-- CHECKS:END -->
 
+<!-- RELEASES:START -->
+### Container images
+
+Every push to `main` builds these for `linux/amd64` and `linux/arm64` and
+pushes them to the GitHub Container Registry ([`.github/workflows/images.yml`](.github/workflows/images.yml)),
+tagged `latest` and `sha-<commit>`:
+
+- `ghcr.io/geoffmyers/sample-browser-api`: `Dockerfile` in `backend/`
+- `ghcr.io/geoffmyers/sample-browser-web`: `Dockerfile` in `frontend/`
+
+<!-- RELEASES:END -->
+
 The backend tests cover filename parsing, including the example table in the
 README; add a case there when you change what the parser recognises.
 

@@ -9,10 +9,11 @@
 #
 # Traefik labels are included; delete them if you terminate TLS another way.
 #
-# Both images are BUILT from this repository (`docker compose build`); no
-# prebuilt image is published. The API URL the browser calls is baked into the
-# frontend at build time: NEXT_PUBLIC_API_URL (default http://localhost:8000).
-# Set it before building if you will open the app from another machine.
+# Both images are published on the GitHub Container Registry
+# (`docker compose pull`), or build them from this repository
+# (`docker compose build`). The browser calls /api on the web app's own
+# address, and the web app forwards it to the API container, so the same
+# images work from any machine.
 version: '3.8'
 
 # =============================================================================
@@ -39,7 +40,7 @@ services:
     container_name: sample-browser-api
     hostname: sample-browser-api.${DOMAIN:-example.com}
     build: ./backend
-    image: sample-browser-api:local
+    image: ghcr.io/geoffmyers/sample-browser-api:latest
 
     # User and security
     user: "${PUID:-568}:${PGID:-568}"
@@ -58,7 +59,7 @@ services:
 
     # Environment
     environment:
-      TZ: ${TZ:-America/Chicago}
+      TZ: ${TZ:-UTC}
       PUID: ${PUID:-568}
       PGID: ${PGID:-568}
 
@@ -109,8 +110,10 @@ services:
     build:
       context: ./frontend
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
-    image: sample-browser-web:local
+        # Empty: the app calls /api on its own origin and forwards it to
+        # API_INTERNAL_URL (below). Set only to call an API elsewhere.
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
+    image: ghcr.io/geoffmyers/sample-browser-web:latest
 
     # User and security
     user: "${PUID:-568}:${PGID:-568}"
@@ -129,9 +132,10 @@ services:
 
     # Environment
     environment:
-      TZ: ${TZ:-America/Chicago}
+      TZ: ${TZ:-UTC}
       NODE_ENV: production
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+      # Where the web app forwards /api requests, read when it starts.
+      API_INTERNAL_URL: ${API_INTERNAL_URL:-http://sample-browser-api:8000}
 
     # Health check
     healthcheck:

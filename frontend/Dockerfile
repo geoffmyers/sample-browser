@@ -20,7 +20,8 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Set environment variable for API URL
-ARG NEXT_PUBLIC_API_URL
+# Empty (the default): the app calls /api on its own origin; see next.config.ts.
+ARG NEXT_PUBLIC_API_URL=
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 
 # Build the application

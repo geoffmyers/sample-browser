@@ -111,22 +111,25 @@ DATA_PATH=/srv/sample-browser/data   # the index and caches; must be writable
 AUDIO_PATH=/srv/audio/samples        # your library; mounted read-only
 ```
 
-Then create the Docker network the compose file joins, build both images and
-start them:
+Then create the Docker network the compose file joins, get both images and
+start them. The images are published on the GitHub Container Registry
+(`ghcr.io/geoffmyers/sample-browser-api` and `-web`, for `linux/amd64`
+and `linux/arm64`), so `docker compose pull` fetches them; `docker compose build`
+builds them from this checkout instead.
 
 ```bash
 docker network create sample-browser
-docker compose build
+docker compose pull            # or: docker compose build
 docker compose up -d
 ```
 
 Open [http://localhost:3000](http://localhost:3000). The first scan starts on
 its own, and the page refreshes its results when the scan finishes.
 
-The browser talks to the API at the URL baked into the frontend when it is
-built, `http://localhost:8000` by default. If you will open the app from
-another machine, set `NEXT_PUBLIC_API_URL` in `.env` to an address that machine
-can reach, add the app's origin to `CORS_ORIGINS`, and rebuild.
+The browser calls `/api` on the web app's own address, and the web app
+forwards those requests to the API container (`API_INTERNAL_URL`), so the
+published images work from any machine without rebuilding. A reverse proxy
+can route `/api` to the API directly instead; the app works either way.
 
 ### Running without Docker
 
@@ -220,13 +223,14 @@ Set in `.env`; `.env.example` lists them all with comments.
 | `AUDIO_PATH` | *(required)* | Host folder holding your library |
 | `NETWORK_NAME` | `sample-browser` | Existing Docker network to join |
 | `PUBLISHED_PORT` | `3000` | Host port for the web app |
-| `NEXT_PUBLIC_API_URL` | `http://localhost:8000` | API address the browser uses; baked in at build time |
+| `API_INTERNAL_URL` | `http://sample-browser-api:8000` | Where the web app forwards the browser's `/api` requests; read at start-up |
+| `NEXT_PUBLIC_API_URL` | *(empty)* | Build time only: an API on another origin for the browser to call directly, instead of `/api` on the app's own |
 | `CORS_ORIGINS` | `http://localhost:3000,http://127.0.0.1:3000` | Origins the API accepts requests from |
 | `SCAN_ON_STARTUP` | `true` | Index the library when the API starts |
 | `WATCH_FOR_CHANGES` | `false` | Re-index as files change; uses more resources |
 | `LOG_LEVEL` | `info` | `debug`, `info`, `warning` or `error` |
 | `PUID`, `PGID` | `568` | User and group the containers run as |
-| `TZ` | `America/Chicago` | Time zone |
+| `TZ` | `UTC` | Time zone |
 | `DOMAIN`, `TRAEFIK_*` | `example.com` | Labels for a Traefik reverse proxy, which serve the app at `sample-browser.<DOMAIN>`; harmless without Traefik |
 | `HOMEPAGE_GROUP` | `Media` | Group for a [Homepage](https://gethomepage.dev/) dashboard tile |
 | `API_*_LIMIT`, `WEB_*_LIMIT` | see `.env.example` | CPU and memory limits |
