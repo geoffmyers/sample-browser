@@ -9,6 +9,7 @@
 ![React 19.2.4](https://img.shields.io/badge/React-19.2.4-61dafb?style=flat-square&logo=react)
 ![TypeScript 5.9.3](https://img.shields.io/badge/TypeScript-5.9.3-3178c6?style=flat-square&logo=typescript)
 ![FastAPI 0.115.9](https://img.shields.io/badge/FastAPI-0.115.9-009688?style=flat-square&logo=fastapi)
+[![Container images](https://img.shields.io/badge/ghcr.io-2%20images-2496ED?style=flat-square&logo=docker&logoColor=white)](https://github.com/geoffmyers/sample-browser/packages)
 [![Licence GPL-3.0-or-later](https://img.shields.io/badge/licence-GPL--3.0--or--later-blue?style=flat-square)](LICENSE.md)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)](CONTRIBUTING.md)
 <!-- BADGES:END -->

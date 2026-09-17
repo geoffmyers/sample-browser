@@ -62,8 +62,8 @@ Every push to `main` builds these for `linux/amd64` and `linux/arm64` and
 pushes them to the GitHub Container Registry ([`.github/workflows/images.yml`](.github/workflows/images.yml)),
 tagged `latest` and `sha-<commit>`:
 
-- `ghcr.io/geoffmyers/sample-browser-api`: `Dockerfile` in `backend/`
-- `ghcr.io/geoffmyers/sample-browser-web`: `Dockerfile` in `frontend/`
+- [`ghcr.io/geoffmyers/sample-browser-api`](https://github.com/geoffmyers/sample-browser/pkgs/container/sample-browser-api): `Dockerfile` in `backend/`
+- [`ghcr.io/geoffmyers/sample-browser-web`](https://github.com/geoffmyers/sample-browser/pkgs/container/sample-browser-web): `Dockerfile` in `frontend/`
 
 <!-- RELEASES:END -->
 
