@@ -69,6 +69,7 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-info}
       SCAN_ON_STARTUP: ${SCAN_ON_STARTUP:-true}
       WATCH_FOR_CHANGES: ${WATCH_FOR_CHANGES:-false}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
 
     # Health check
     healthcheck:

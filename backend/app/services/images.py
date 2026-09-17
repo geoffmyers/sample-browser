@@ -43,6 +43,44 @@ def _is_cover_art_candidate(filename: str) -> bool:
     return False
 
 
+def _resolve_directory_within_root(directory: str, audio_root: Path) -> Optional[Path]:
+    """
+    Resolve `directory` against `audio_root` and confirm the result stays
+    inside it.
+
+    Rejects absolute paths (`Path(root) / '/etc'` returns `/etc` — pathlib
+    treats an absolute right-hand operand as a full replacement, not a join),
+    `..` traversal, and symlinks that resolve outside the root. Returns the
+    resolved directory, or None if it escapes the root or doesn't exist.
+    """
+    audio_root_resolved = audio_root.resolve()
+
+    if not directory or directory == ".":
+        target_dir = audio_root
+    else:
+        target_dir = audio_root / directory
+
+    try:
+        resolved = target_dir.resolve()
+        resolved.relative_to(audio_root_resolved)
+    except (ValueError, OSError):
+        return None
+
+    if not resolved.exists() or not resolved.is_dir():
+        return None
+
+    return resolved
+
+
+def _is_within_root(path: str, audio_root_resolved: Path) -> bool:
+    """Confirm a file path resolves inside audio_root_resolved (catches symlink escapes)."""
+    try:
+        Path(path).resolve().relative_to(audio_root_resolved)
+        return True
+    except (ValueError, OSError):
+        return False
+
+
 def find_directory_image(directory: str) -> Optional[str]:
     """
     Find an image file in a directory that could be used as cover art.
@@ -54,18 +92,16 @@ def find_directory_image(directory: str) -> Optional[str]:
         directory: Relative directory path from audio root.
 
     Returns:
-        Absolute path to image file, or None if not found.
+        Absolute path to image file, or None if not found or if the
+        requested directory would resolve outside the audio root.
     """
     settings = get_settings()
     audio_root = Path(settings.audio_path)
+    audio_root_resolved = audio_root.resolve()
 
-    # Handle root directory
-    if not directory or directory == ".":
-        target_dir = audio_root
-    else:
-        target_dir = audio_root / directory
-
-    if not target_dir.exists() or not target_dir.is_dir():
+    target_dir = _resolve_directory_within_root(directory, audio_root)
+    if target_dir is None:
+        logger.warning(f"Rejected directory outside audio root: {directory!r}")
         return None
 
     try:
@@ -79,6 +115,12 @@ def find_directory_image(directory: str) -> Optional[str]:
 
             ext = Path(entry.name).suffix.lower()
             if ext not in IMAGE_EXTENSIONS:
+                continue
+
+            # Guard against a symlink inside the directory that resolves
+            # outside the audio root.
+            if not _is_within_root(entry.path, audio_root_resolved):
+                logger.warning(f"Rejected image outside audio root: {entry.path!r}")
                 continue
 
             images.append(entry.path)

@@ -1,0 +1,25 @@
+# Environment files. Keep .env.example tracked; everything else generated
+# from it (by `cp .env.example .env` or 1Password's `op inject`) is not.
+.env
+.env.*
+!.env.example
+
+# Frontend (Next.js)
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.home-tmp/
+
+# Backend (Python)
+backend/__pycache__/
+**/__pycache__/
+backend/.pytest_cache/
+backend/.venv/
+*.pyc
+
+# App data — DATA_PATH defaults to ./data for local (non-Docker) runs; the
+# backend writes samples.db, midi_cache/ and transcode_cache/ here.
+data/
+
+# OS/editor cruft
+.DS_Store

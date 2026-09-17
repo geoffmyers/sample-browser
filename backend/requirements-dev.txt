@@ -1,2 +1,4 @@
 -r requirements.txt
+# fastapi.testclient.TestClient (upload -> scan -> search integration test)
+httpx>=0.27
 pytest>=8

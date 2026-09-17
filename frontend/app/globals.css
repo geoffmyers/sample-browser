@@ -1951,3 +1951,32 @@ body {
 .sample-card-cover {
   margin-right: 0.5rem;
 }
+
+/* Footer (GitHub source link) */
+.app-footer {
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+}
+
+.app-footer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  padding: 0.25rem 0.5rem;
+}
+
+.app-footer-link:hover {
+  color: var(--text-primary);
+}
+
+.app-footer-link:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}

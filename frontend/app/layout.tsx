@@ -4,6 +4,7 @@ import { SettingsProvider } from "./lib/context/SettingsContext";
 import { FavoritesProvider } from "./lib/context/FavoritesContext";
 import { AudioProvider } from "./lib/context/AudioContext";
 import { BrowserStateProvider } from "./lib/context/BrowserStateContext";
+import Footer from "./components/Footer";
 
 export const metadata: Metadata = {
   title: "Sample Browser",
@@ -28,6 +29,7 @@ export default function RootLayout({
             </BrowserStateProvider>
           </FavoritesProvider>
         </SettingsProvider>
+        <Footer />
       </body>
     </html>
   );

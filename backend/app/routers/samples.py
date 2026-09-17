@@ -58,6 +58,20 @@ def sanitize_filename(filename: str) -> str:
     return filename if filename else "unnamed_file"
 
 
+def escape_like(value: str, escape_char: str = "\\") -> str:
+    """
+    Escape SQLite LIKE wildcards (`%`, `_`) and the escape character itself
+    so a directory or descriptor filter can't widen the match (e.g. a
+    directory literally named `100%` would otherwise match everything).
+    Pair with `LIKE ? ESCAPE '\\'` in the query.
+    """
+    return (
+        value.replace(escape_char, escape_char * 2)
+        .replace("%", f"{escape_char}%")
+        .replace("_", f"{escape_char}_")
+    )
+
+
 def sanitize_fts5_query(query: str) -> str:
     """
     Sanitize a search query for FTS5 to prevent syntax errors.
@@ -145,7 +159,9 @@ def sample_to_response(sample: Sample) -> SampleResponse:
 
 
 @router.get("", response_model=SampleListResponse)
+@limiter.limit("120/minute")
 async def list_samples(
+    request: Request,
     # Pagination
     page: int = Query(1, ge=1, description="Page number"),
     per_page: int = Query(50, ge=1, le=200, description="Items per page"),
@@ -259,8 +275,8 @@ async def list_samples(
             params.append(sanitized_query)
 
     if directory:
-        conditions.append("directory LIKE ?")
-        params.append(f"{directory}%")
+        conditions.append("directory LIKE ? ESCAPE '\\'")
+        params.append(f"{escape_like(directory)}%")
 
     if instrument:
         # Support comma-separated values for multi-select
@@ -377,8 +393,8 @@ async def list_samples(
 
     if descriptors:
         # Search within JSON array of descriptors
-        conditions.append("descriptors_json LIKE ?")
-        params.append(f"%{descriptors}%")
+        conditions.append("descriptors_json LIKE ? ESCAPE '\\'")
+        params.append(f"%{escape_like(descriptors)}%")
 
     if is_polyphonic is not None:
         conditions.append("is_polyphonic = ?")
@@ -474,13 +490,19 @@ async def list_samples(
 
 
 @router.get("/search", response_model=list[SampleResponse])
+@limiter.limit("60/minute")
 async def search_samples(
+    request: Request,
     q: str = Query(..., min_length=1, description="Search query"),
     limit: int = Query(20, ge=1, le=100, description="Max results"),
 ) -> list[SampleResponse]:
     """
     Full-text search across filenames and metadata.
     """
+    sanitized_query = sanitize_fts5_query(q)
+    if not sanitized_query:
+        return []
+
     with get_db() as conn:
         rows = conn.execute(
             """
@@ -490,7 +512,7 @@ async def search_samples(
             ORDER BY rank
             LIMIT ?
             """,
-            (q, limit),
+            (sanitized_query, limit),
         ).fetchall()
 
     return [sample_to_response(Sample.from_row(dict(row))) for row in rows]
@@ -594,6 +616,16 @@ async def get_directory_image(
     filepath = Path(image_path)
     if not filepath.exists():
         raise HTTPException(status_code=404, detail="Image file not found")
+
+    # Defense in depth: images.py already rejects paths outside the audio
+    # root, but re-verify here too in case a future caller reaches this
+    # endpoint with an already-resolved path.
+    settings = get_settings()
+    audio_root_resolved = Path(settings.audio_path).resolve()
+    try:
+        filepath.resolve().relative_to(audio_root_resolved)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid directory path")
 
     # Determine content type
     content_type, _ = mimetypes.guess_type(str(filepath))

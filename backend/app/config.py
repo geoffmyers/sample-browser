@@ -16,7 +16,7 @@ class Settings(BaseSettings):
 
     # Scanning behavior
     scan_on_startup: bool = True
-    watch_for_changes: bool = True
+    watch_for_changes: bool = False
 
     # Audio file extensions to index
     audio_extensions: set[str] = {

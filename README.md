@@ -5,7 +5,7 @@
 # Sample Browser
 
 <!-- BADGES:START -->
-![Next.js 16.1.6](https://img.shields.io/badge/Next.js-16.1.6-black?style=flat-square&logo=nextdotjs)
+![Next.js 16.3.5](https://img.shields.io/badge/Next.js-16.3.5-black?style=flat-square&logo=nextdotjs)
 ![React 19.2.4](https://img.shields.io/badge/React-19.2.4-61dafb?style=flat-square&logo=react)
 ![TypeScript 5.9.3](https://img.shields.io/badge/TypeScript-5.9.3-3178c6?style=flat-square&logo=typescript)
 ![FastAPI 0.115.9](https://img.shields.io/badge/FastAPI-0.115.9-009688?style=flat-square&logo=fastapi)
@@ -226,7 +226,7 @@ Set in `.env`; `.env.example` lists them all with comments.
 | `PUBLISHED_PORT` | `3000` | Host port for the web app |
 | `API_INTERNAL_URL` | `http://sample-browser-api:8000` | Where the web app forwards the browser's `/api` requests; read at start-up |
 | `NEXT_PUBLIC_API_URL` | *(empty)* | Build time only: an API on another origin for the browser to call directly, instead of `/api` on the app's own |
-| `CORS_ORIGINS` | `http://localhost:3000,http://127.0.0.1:3000` | Origins the API accepts requests from |
+| `CORS_ORIGINS` | `http://localhost:3000,http://127.0.0.1:3000` | Comma-separated list of origins the API accepts cross-origin requests from. Only matters if something calls the API directly (e.g. `NEXT_PUBLIC_API_URL`, `/docs`, a script); the bundled web app talks to it same-origin through `frontend/app/api/[...path]/route.ts` and isn't affected. There is no wildcard default: set it to your real origin(s) (e.g. `https://sample-browser.example.com`) before exposing the API's own port publicly, since the API sends credentialed CORS responses (`allow_credentials=True`) |
 | `SCAN_ON_STARTUP` | `true` | Index the library when the API starts |
 | `WATCH_FOR_CHANGES` | `false` | Re-index as files change; uses more resources |
 | `LOG_LEVEL` | `info` | `debug`, `info`, `warning` or `error` |
@@ -243,17 +243,20 @@ All routes are under `/api`. FastAPI serves interactive documentation at
 
 | Method | Route | What it does |
 |---|---|---|
-| `GET` | `/api/samples` | A page of samples, filtered and sorted |
-| `GET` | `/api/samples/search?q=` | Full-text search |
+| `GET` | `/api/samples` | A page of samples, filtered and sorted (rate-limited to 120 a minute) |
+| `GET` | `/api/samples/search?q=` | Full-text search (rate-limited to 60 a minute) |
 | `GET` | `/api/samples/{id}` | One sample |
 | `GET` | `/api/samples/{id}/audio` | Streams the audio, converting CAF and MIDI to WAV first; `?download=true` sends it as an attachment, `?transcode=false` skips the conversion |
 | `GET` | `/api/samples/directories` | Folders with counts |
 | `GET` | `/api/samples/instruments`, `/keys`, `/genres`, `/file-types` | Filter values with counts |
 | `GET` | `/api/samples/directory-image?directory=` | A folder's cover art |
-| `POST` | `/api/samples/scan` | Starts a rescan |
+| `POST` | `/api/samples/scan` | Starts a rescan (rate-limited to 5 a minute) |
 | `GET` | `/api/samples/scan/status` | Progress of the current scan |
 | `POST` | `/api/samples/upload?directory=` | Uploads files (rate-limited to 30 a minute) |
 | `GET` | `/api/health` | Health check |
+
+Rate limits are per client IP (`slowapi`, keyed by `get_remote_address`) and
+return `429 Too Many Requests` once exceeded.
 
 `/api/samples` accepts `q`, `directory`, `instrument`, `genre`, `key`, `scale`,
 `tempo_min`/`tempo_max`, `duration_min`/`duration_max`, `bars_min`/`bars_max`,
