@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="frontend/public/favicon.svg" width="96" height="96" alt="Sample Browser icon">
+  <img src="docs/icon.svg" width="256" height="256" alt="Sample Browser icon">
 </p>
 
 # Sample Browser
