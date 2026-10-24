@@ -64,7 +64,7 @@ sample-browser/
 │   ├── samples.db           # SQLite database
 │   ├── midi_cache/          # Cached MIDI->WAV files
 │   └── transcode_cache/     # Cached CAF/ALAC->WAV files
-├── docker-compose.yml
+├── docker-compose.example.yml   # copy to docker-compose.yml and edit
 ├── .env.example
 ├── README.md
 ├── ROADMAP.md
@@ -94,12 +94,23 @@ sample-browser/
 
 ### Docker (Production)
 
+`docker-compose.example.yml` defines two services, **`sample-browser-api`**
+(FastAPI, port 8000 inside the network) and **`sample-browser-web`** (Next.js,
+published on `PUBLISHED_PORT`, default 3000). Images are
+`ghcr.io/geoffmyers/sample-browser-api` and `ghcr.io/geoffmyers/sample-browser-web`.
+
 ```bash
+cp docker-compose.example.yml docker-compose.yml   # and .env.example to .env
 docker compose build
 docker compose up -d
-docker compose logs -f backend
-docker compose logs -f frontend
+docker compose logs -f sample-browser-api
+docker compose logs -f sample-browser-web
 ```
+
+The browser only ever talks to the web container: the app calls `/api` on its
+own origin, and a Next.js route handler (`frontend/app/api/[...path]/route.ts`)
+forwards it to `API_INTERNAL_URL`, read when the server starts. So one built
+image works behind any hostname.
 
 ### Backend (Local Development)
 
@@ -124,6 +135,9 @@ Required:
 - `AUDIO_PATH` - Host path for audio files (read-only)
 
 Optional:
+- `API_INTERNAL_URL` - Where `sample-browser-web` forwards `/api` (default in the compose file: `http://sample-browser-api:8000`; the code's own fallback is `http://localhost:8000`, which is what local development uses)
+- `CORS_ORIGINS` - Comma-separated origins the API accepts (default: `http://localhost:3000,http://127.0.0.1:3000`). Only matters when a browser calls the API directly
+- `NEXT_PUBLIC_API_URL` - **Build-time** only (a Docker build arg, inlined by Next.js). Leave it empty so the app uses same-origin `/api`; set it only to point the browser at an API on another origin. Setting it at runtime has no effect
 - `PUID`/`PGID` - Container user/group IDs (default: 568)
 - `TZ` - Timezone (default: UTC)
 - `PUBLISHED_PORT` - Web port (default: 3000)
